@@ -9,16 +9,21 @@ function App() {
   const [data, setData] = useState<User[]>([]);
   const [page, setPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasMoreData, setHasMoreData] = useState<boolean>(true);
 
   const loadMoreData = async () => {
     try {
       setIsLoading(true);
       const response = await userApi.getUsers(page);
-      setData((currentData: User[]) => [...currentData, ...response.data.data]);
+      setData((currentData: User[]) => [
+        ...currentData,
+        ...response?.data?.data?.data,
+      ]);
       setPage((currentPage) => currentPage + 1);
       setIsLoading(false);
+      setHasMoreData(response?.data?.data?.hasMoreData);
     } catch (error) {
-      setData([])
+      setData([]);
     }
   };
 
@@ -29,11 +34,12 @@ function App() {
   const onScroll = useCallback(async () => {
     if (
       window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-      !isLoading
+      !isLoading &&
+      hasMoreData
     ) {
       await loadMoreData();
     }
-  }, [isLoading, page]);
+  }, [isLoading, page, hasMoreData]);
 
   useEffect(() => {
     window.addEventListener("scroll", onScroll);
